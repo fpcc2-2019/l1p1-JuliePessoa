@@ -82,6 +82,12 @@ cg %>%
     mutate(verao = mes > 8 | mes < 3) %>% 
     ggplot(aes(x = tmax, fill = verao)) + 
     geom_density(alpha = .4)
+
+
+climas %>%
+    ggplot(aes(x = tmedia, fill = cidade)) + 
+    geom_density(alpha = .4) +
+    facet_wrap(~ mes)
 ```
 
 Um exercício legal é procurar padrões nos gráficos de densidade (ou histogramas) das temperaturas em diferentes anos:

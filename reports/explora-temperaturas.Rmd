@@ -1,5 +1,6 @@
 ---
 title: "Temperatura JP x CG"
+author: "Julie Pessoa"
 output:
     html_document:
     df_print: paged
@@ -11,10 +12,11 @@ library(tidyverse)
 library(here)
 library(lubridate)
 library(ggbeeswarm)
+library(RColorBrewer)
 theme_set(theme_bw())
 ```
 
-```{r read}
+```{r message=FALSE, warning=FALSE}
 climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), 
                   col_types = "cTdddddd")
 
@@ -24,25 +26,64 @@ glimpse(climas)
 ## Temperatura
 
 ### Onde é mais quente?
+```{r}
+climas %>%
+    filter(ano >= 2008) %>% 
+    ggplot(aes(x = tmedia, y = cidade)) + 
+    geom_jitter(width = .1, alpha = .7, aes(color = tmedia)) + 
+    scale_colour_gradientn(colours = brewer.pal(5, "OrRd")) +
+    coord_flip() +
+    labs(
+        x = "Temperatura média",
+        y = "Cidade"
+    )
+```
 
-
-### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?  
-
-
-### Quais os meses mais quentes e mais frios? 
+Analisando a visualização acima, que retrata a temperatura média de Campina Grande e João Pessoa a partir do ano de 2008, é possível observar que as temperaturas de Campina Grande se concetram mais abaixo (mais frio) e as de Joao Pessoa mais acima (mais quente). Portanto é possível deduzir que João Pessoa é a mais quente das cidades. Ainda podemos observar que a dispersão dos pontos para a cidade de Campina Grande é ligeiramente maior do que em João Pessoa, sugerindo que a variação de temperatura em Campina Grande é maior.
+Eu escolhi a métrica de temperatura média para representação da temperatura para que fosse levado em consideração as extremidades de temperatura também.
 
 
 ### Qual foi o São João  mais frio de CG que está nos nossos dados?
+```{r}
+climas %>%
+    filter(mes == 6, cidade == "Campina Grande") %>%
+    group_by(ano) %>%
+    summarise(tmin = mean(tmin)) %>%
+    mutate(tmin = factor(tmin))%>%
+    ggplot(aes(ano,tmin)) + 
+    geom_bar(stat="identity") +
+    scale_x_continuous(breaks = seq(1994,2019,2)) +
+    labs(x = "Ano", y = "Temperatura Mínima")
+```
 
+Considerando a média das temperaturas mínimas do mês de Junho de todos os anos coletados, é possível observar na visualização acima que a média das temperaturas em 2008 é a mais baixa em relação as outras. Portanto o São João de 2008 foi o mais frio.
+É possível observar que o ano de 2000 e 2001 não tem dados coletados no mês de Junho.
 
 
 ## Chuva
 
 ### Quanto chove por semana em JP e CG?
+```{r}
+climas %>%
+    mutate(semana = as.numeric(strftime(climas$semana, format = "%V"))) %>%
+    group_by(semana, cidade) %>%
+    summarise(chuva = mean(chuva)) %>%
+    ggplot(aes(x=semana,y=chuva, colour=cidade)) + 
+    geom_line() +
+    scale_x_continuous(breaks = seq(1,54,4)) +
+    labs(x = "Semana do ano", y = "Média de chuva")
+```
 
-Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
+Através da visualização acima é possível observar que nos meses de inverno, a média de chuva fica acima dos 40, enquanto que nos meses de verão fica abaixo disso.
 
-### No geral, onde chove mais?
 
 ### A distribuição é diferente em meses específicos? 
+```{r message=FALSE, warning=FALSE}
+climas %>%
+    filter(ano >= 2008) %>% 
+    ggplot(aes(x = chuva)) + 
+    geom_histogram(fill = "salmon") + 
+    facet_wrap(~ mes)
+```
 
+No geral as ditruibuições tem uma concetração no 0, mas é possível notar que nos meses de verão a concentração no 0 é maior, enquanto que nos meses de inverno a cauda esquerda é um pouco maior.
